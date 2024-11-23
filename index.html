@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2024 Adrian Iain Lam
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the “Software”), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Stacked Range Chart</title>
+
+    <style>
+     #chart {
+       width: 650px;
+     }
+     #error {
+       visibility: hidden;
+       color: red;
+     }
+     #container {
+       display: flex;
+       align-items: center;
+       justify-content: center;
+     }
+     #legend {
+       margin-left: 10px;
+       font-size: 10pt;
+     }
+     footer {
+       font-size: 8pt;
+       color: gray;
+     }
+    </style>
+
+    <script>
+     window.Promise ||
+            document.write(
+              '<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"><\/script>'
+            )
+     window.Promise ||
+            document.write(
+              '<script src="https://cdn.jsdelivr.net/npm/eligrey-classlist-js-polyfill@1.2.20171210/classList.min.js"><\/script>'
+            )
+     window.Promise ||
+            document.write(
+              '<script src="https://cdn.jsdelivr.net/npm/findindex_polyfill_mdn"><\/script>'
+            )
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Stacked Range Chart</h1>
+    <div id="preamble">
+      <p>As described by <a href="https://www.youtube.com/watch?v=5zBg9pH_6bE">minutephysics</a>.</p>
+      <p>Powered by <a href="https://apexcharts.com/">ApexCharts</a>.</p>
+    </div>
+
+    <div id="input">
+      Chart title: <input type="text" id="title" autocomplete="off" value="Climate in London" />
+      y-axis title: <input type="text" id="ytitle" autocomplete="off" value="Temperature / °C" />
+
+      <table>
+        <thead>
+          <tr>
+            <td></td>
+            <td></td>
+            <th>
+              <input type="text" id="label-x0" class="label-x" autocomplete="off" value="Ontario" /><input type="button" id="delete-col0" class="delete-col" value="-" />
+            </th>
+            <th>
+              <input type="text" id="label-x1" class="label-x" autocomplete="off" value="England" /><input type="button" id="delete-col1" class="delete-col" value="-" />
+            </th>
+            <th>
+              <input type="text" id="label-x2" class="label-x" autocomplete="off" value="Kentucky" /><input type="button" id="delete-col2" class="delete-col" value="-" />
+            </th>
+            <th>
+              <input type="button" id="add-col" value="+" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th><input type="button" id="delete-row0" class="delete-row" value="-" /></th>
+            <th><input type="text" id="label-y0" class="label-y" autocomplete="off" value="Winter mean low" /></th>
+            <td><input type="number" id="value-0-0" class="value" autocomplete="off" value="-9" /></td>
+            <td><input type="number" id="value-1-0" class="value" autocomplete="off" value="3" /></td>
+            <td><input type="number" id="value-2-0" class="value" autocomplete="off" value="-3" /></td>
+          </tr>
+          <tr>
+            <th><input type="button" id="delete-row1" class="delete-row" value="-" /></th>
+            <th><input type="text" id="label-y1" class="label-y" autocomplete="off" value="Annual mean low" /></th>
+            <td><input type="number" id="value-0-1" class="value" autocomplete="off" value="3" /></td>
+            <td><input type="number" id="value-1-1" class="value" autocomplete="off" value="8" /></td>
+            <td><input type="number" id="value-2-1" class="value" autocomplete="off" value="8" /></td>
+          </tr>
+          <tr>
+            <th><input type="button" id="delete-row2" class="delete-row" value="-" /></th>
+            <th><input type="text" id="label-y2" class="label-y" autocomplete="off" value="Annual mean" /></th>
+            <td><input type="number" id="value-0-2" class="value" autocomplete="off" value="8" /></td>
+            <td><input type="number" id="value-1-2" class="value" autocomplete="off" value="12" /></td>
+            <td><input type="number" id="value-2-2" class="value" autocomplete="off" value="14" /></td>
+          </tr>
+          <tr>
+            <th><input type="button" id="delete-row3" class="delete-row" value="-" /></th>
+            <th><input type="text" id="label-y3" class="label-y" autocomplete="off" value="Annual mean high" /></th>
+            <td><input type="number" id="value-0-3" class="value" autocomplete="off" value="13" /></td>
+            <td><input type="number" id="value-1-3" class="value" autocomplete="off" value="16" /></td>
+            <td><input type="number" id="value-2-3" class="value" autocomplete="off" value="20" /></td>
+          </tr>
+          <tr>
+            <th><input type="button" id="delete-row4" class="delete-row" value="-" /></th>
+            <th><input type="text" id="label-y4" class="label-y" autocomplete="off" value="Summer mean high" /></th>
+            <td><input type="number" id="value-0-4" class="value" autocomplete="off" value="27" /></td>
+            <td><input type="number" id="value-1-4" class="value" autocomplete="off" value="24" /></td>
+            <td><input type="number" id="value-2-4" class="value" autocomplete="off" value="30" /></td>
+          </tr>
+          <tr>
+            <th><input type="button" id="add-row" value="+" /></th>
+          </tr>
+        </tbody>
+      </table>
+
+      <div id="error">Error: Data not sorted in ascending order</div>
+    </div>
+
+
+    <div id="container">
+      <div id="chart"></div>
+      <div id="legend">
+        <div id="legend-label-y4" class="legend-label">Summer mean high</div>
+        <input type="color" id="color-3" class="input-color" autocomplete="off" value="#FF4560" />
+        <div id="legend-label-y3" class="legend-label">Annual mean high</div>
+        <input type="color" id="color-2" class="input-color" autocomplete="off" value="#FEB019" />
+        <div id="legend-label-y2" class="legend-label">Annual mean</div>
+        <input type="color" id="color-1" class="input-color" autocomplete="off" value="#00E396" />
+        <div id="legend-label-y1" class="legend-label">Annual mean low</div>
+        <input type="color" id="color-0" class="input-color" autocomplete="off" value="#008FFB" />
+        <div id="legend-label-y0" class="legend-label">Winter mean low</div>
+      </div>
+    </div>
+
+    <script>
+
+     var options = {
+       series: [
+         {
+           name: 'Interval 0',
+           data: [
+             { x: 'Ontario', y: [-9, 3] },
+             { x: 'England', y: [3, 8] },
+             { x: 'Kentucky', y: [-3, 8] }
+           ]
+         },
+         {
+           name: 'Interval 1',
+           data: [
+             { x: 'Ontario', y: [3, 8] },
+             { x: 'England', y: [8, 12] },
+             { x: 'Kentucky', y: [8, 14] }
+           ]
+         },
+         {
+           name: 'Interval 2',
+           data: [
+             { x: 'Ontario', y: [8, 13] },
+             { x: 'England', y: [12, 16] },
+             { x: 'Kentucky', y: [14, 20] }
+           ]
+         },
+         {
+           name: 'Interval 3',
+           data: [
+             { x: 'Ontario', y: [13, 27] },
+             { x: 'England', y: [16, 24] },
+             { x: 'Kentucky', y: [20, 30] }
+           ]
+         }
+       ],
+       chart: {
+         height: 350,
+         type: 'rangeBar',
+         animations: {
+           enabled: false
+         },
+         toolbar: {
+           show: false
+         }
+       },
+       plotOptions: {
+         bar: {
+           horizontal: false,
+           rangeBarGroupRows: true
+         }
+       },
+       colors: [
+         "#008FFB", "#00E396", "#FEB019", "#FF4560"
+       ],
+       fill: {
+         type: 'solid',
+         opacity: 1
+       },
+       yaxis: {
+         title: {text: "Temperature / °C"}
+       },
+       title: {
+         text: "Climate in London",
+         align: "center"
+       },
+       legend: {
+         show: false
+       },
+       tooltip: {
+         enabled: false
+       }
+     };
+
+     var chart = new ApexCharts(document.querySelector("#chart"), options);
+     chart.render();
+
+     const titleElem = document.getElementById("title");
+     titleElem.addEventListener("change", (event) => {
+       chart.updateOptions({
+         title: { text: titleElem.value }
+       });
+     });
+
+     const ytitleElem = document.getElementById("ytitle");
+     ytitleElem.addEventListener("change", (event) => {
+       chart.updateOptions({
+         yaxis: { title: { text: event.target.value } }
+       });
+     });
+
+     function updateYLabel(event) {
+       let l = document.getElementById("legend-" + event.target.id);
+       l.innerText = event.target.value;
+     }
+
+     const ylabelElems = document.getElementsByClassName("label-y");
+     for (let e of ylabelElems) {
+       e.addEventListener("change", updateYLabel);
+     }
+
+     var rows = 5;
+     var cols = 3;
+
+     function changeColor() {
+       let opt = { colors: [] };
+       for (let i = 0; i < rows - 1; i++) {
+         let elem = document.getElementById("color-" + i);
+         opt.colors.push(elem.value);
+       }
+       chart.updateOptions(opt);
+     }
+
+     const colorElems = document.getElementsByClassName("input-color");
+     for (let e of colorElems) {
+       e.addEventListener("change", changeColor);
+     }
+
+     function getDataValue(x, y) {
+       return Number(document.getElementById("value-" + x + "-" + y).value);
+     }
+
+     function validateData() {
+       for (let j = 0; j < cols; j++) {
+         for (let i = 0; i < rows - 1; i++) {
+           let current = getDataValue(j, i);
+           let next = getDataValue(j, i + 1);
+           if (current > next) return false;
+         }
+       }
+       return true;
+     }
+
+     function updateDataSeries() {
+       let valid = validateData();
+       if (!valid) {
+         document.getElementById("error").style.visibility = "visible";
+         return;
+       }
+       document.getElementById("error").style.visibility = "hidden";
+
+       let series = [];
+       for (let i = 0; i < rows - 1; i++) {
+         let s = { name: "Interval " + i, data: [] };
+         for (let j = 0; j < cols; j++) {
+           s.data.push({
+             x: document.getElementById("label-x" + j).value,
+             y: [getDataValue(j, i), getDataValue(j, i + 1)]
+           });
+         }
+         series.push(s);
+       }
+       chart.updateSeries(series);
+     }
+
+     const xlabelElems = document.getElementsByClassName("label-x");
+     for (let e of xlabelElems) {
+       e.addEventListener("change", updateDataSeries);
+     }
+     const valueElems = document.getElementsByClassName("value");
+     for (let e of valueElems) {
+       e.addEventListener("change", updateDataSeries);
+     }
+
+     function deleteCol(event) {
+       let delColId = event.target.id;
+       let delIdx = Number(delColId.replace(/^delete-col/, ""));
+
+       // Move remaining columns to the left
+       for (let j = delIdx; j < cols - 1; j++) {
+         xlabelElem = document.getElementById("label-x" + j);
+         xlabelElem.value = document.getElementById("label-x" + (j + 1)).value;
+         for (let i = 0; i < rows; i++) {
+           let valueElem = document.getElementById("value-" + j + "-" + i);
+           valueElem.value = getDataValue(j + 1, i);
+         }
+       }
+
+       // Delete final column
+       cols--;
+       let finalHeader = document.getElementById("label-x" + cols);
+       finalHeader.parentElement.remove();
+       for (let i = 0; i < rows; i++) {
+         let valueElem = document.getElementById("value-" + cols + "-" + i);
+         valueElem.parentElement.remove();
+       }
+
+       // If only one column left, disable delete button
+       if (cols == 1) {
+         let delButton = document.getElementById("delete-col0");
+         delButton.disabled = true;
+       }
+
+       updateDataSeries();
+     }
+
+     const delColElems = document.getElementsByClassName("delete-col");
+     for (let e of delColElems) {
+       e.addEventListener("click", deleteCol);
+     }
+
+     function deleteRow(event) {
+       let delRowId = event.target.id;
+       let delIdx = Number(delRowId.replace(/^delete-row/, ""));
+
+       // Move remaining rows up
+       for (let i = delIdx; i < rows - 1; i++) {
+         let ylabelElem = document.getElementById("label-y" + i);
+         ylabelElem.value = document.getElementById("label-y" + (i + 1)).value;
+         for (let j = 0; j < cols; j++) {
+           let valueElem = document.getElementById("value-" + j + "-" + i);
+           valueElem.value = getDataValue(j, i + 1);
+         }
+         // Move remaining legend entries down
+         let legElem = document.getElementById("legend-label-y" + i);
+         legElem.innerText = document.getElementById("legend-label-y" + (i + 1)).innerText;
+       }
+
+       // Delete final row
+       rows--;
+       let finalHeader = document.getElementById("label-y" + rows);
+       finalHeader.parentElement.parentElement.remove();
+
+       // Delete final legend entry and color input
+       document.getElementById("legend-label-y" + rows).remove();
+       document.getElementById("color-" + (rows - 1)).remove();
+
+       // If only two rows left, disable delete button
+       if (rows == 2) {
+         var delButton = document.getElementById("delete-row0");
+         delButton.disabled = true;
+         delButton = document.getElementById("delete-row1");
+         delButton.disabled = true;
+       }
+
+       updateDataSeries();
+     }
+
+     const delRowElems = document.getElementsByClassName("delete-row");
+     for (let e of delRowElems) {
+       e.addEventListener("click", deleteRow);
+     }
+
+     const addRowElem = document.getElementById("add-row");
+     addRowElem.addEventListener("click", (event) => {
+       let currentTr = addRowElem.parentElement.parentElement;
+       let tr = document.createElement("tr");
+       var th = document.createElement("th");
+       var input = document.createElement("input");
+       input.type = "button";
+       input.id = "delete-row" + rows;
+       input.class = "delete-row";
+       input.value = "-";
+       input.addEventListener("click", deleteRow);
+       th.appendChild(input);
+       tr.appendChild(th);
+
+       let newName = "New value " + Math.floor(Math.random() * 0x1000000);
+
+       th = document.createElement("th");
+       input = document.createElement("input");
+       input.type = "text";
+       input.id = "label-y" + rows;
+       input.class = "label-y";
+       input.autocomplete = "off";
+       input.value = newName;
+       input.addEventListener("change", updateYLabel);
+       th.appendChild(input);
+       tr.appendChild(th);
+
+       for (let j = 0; j < cols; j++) {
+         var td = document.createElement("td");
+         input = document.createElement("input");
+         input.type = "number";
+         input.id = "value-" + j + "-" + rows;
+         input.class = "value";
+         input.autocomplete = "off";
+         input.value = getDataValue(j, rows - 1) + 1;
+         input.addEventListener("change", updateDataSeries);
+         td.appendChild(input);
+         tr.appendChild(td);
+       }
+
+       currentTr.parentElement.insertBefore(tr, currentTr);
+
+       let currentLegend = document.getElementById("legend-label-y" + (rows - 1));
+       let div = document.createElement("div");
+       div.id = "legend-label-y" + rows;
+       div.class = "legend-label";
+       div.innerText = newName;
+       currentLegend.parentElement.insertBefore(div, currentLegend);
+       input = document.createElement("input");
+       input.type = "color";
+       input.id = "color-" + (rows - 1);
+       input.class = "input-color";
+       input.autocomplete = "off";
+       input.value = "#" + Math.floor(Math.random() * 0x1000000).toString(16);
+       input.addEventListener("change", changeColor);
+       currentLegend.parentElement.insertBefore(input, currentLegend);
+
+       // Enable delete buttons
+       var delButton = document.getElementById("delete-row0");
+       delButton.disabled = false;
+       delButton = document.getElementById("delete-row1");
+       delButton.disabled = false;
+
+       rows++;
+
+       changeColor();
+       updateDataSeries();
+     });
+
+     const addColElem = document.getElementById("add-col");
+     addColElem.addEventListener("click", (event) => {
+       let currentTh = event.target.parentElement;
+       var th = document.createElement("th");
+       var input = document.createElement("input");
+       input.type = "text";
+       input.id = "label-x" + cols;
+       input.class = "label-x";
+       input.autocomplete = "off";
+       input.value = "New value " + Math.floor(Math.random() * 0x1000000);
+       input.addEventListener("change", updateDataSeries);
+       th.appendChild(input);
+       input = document.createElement("input");
+       input.type = "button";
+       input.id = "delete-col" + cols;
+       input.class = "delete-col";
+       input.value = "-";
+       input.addEventListener("click", deleteCol);
+       th.appendChild(input);
+       currentTh.parentElement.insertBefore(th, currentTh);
+
+       for (let i = 0; i < rows; i++) {
+         let currentTd = document.getElementById("value-" + (cols - 1) + "-" + i).parentElement;
+         let tr = currentTd.parentElement;
+         let td = document.createElement("td");
+         input = document.createElement("input");
+         input.type = "number";
+         input.id = "value-" + cols + "-" + i;
+         input.class = "value";
+         input.autocomplete = "off";
+         input.value = i;
+         input.addEventListener("change", updateDataSeries);
+         td.appendChild(input);
+         tr.appendChild(td);
+       }
+
+       cols++;
+       let delButton = document.getElementById("delete-col0");
+       delButton.disabled = false;
+       updateDataSeries();
+     });
+    </script>
+
+    <footer>
+      Copyright (c) 2024 Adrian Iain Lam. MIT License - see source for details.
+    </footer>
+  </body>
+</html>
